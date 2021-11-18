@@ -7,6 +7,7 @@ plot_missing <- function(data, percent=F) {
 
   pivot_missing_patterns <- missing_patterns %>%
     rownames_to_column(var = "id") %>%
+    mutate(id=as.integer(id)) %>%
     gather(key, value, -c(id, count))
 
   variable_missing <- missing_patterns %>%

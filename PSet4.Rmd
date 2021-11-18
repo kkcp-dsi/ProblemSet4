@@ -48,6 +48,7 @@ num_of_rows <- nrow(Lock5withR::HollywoodMovies2011)
 
 pivot_missing_patterns <- missing_patterns %>% 
   rownames_to_column(var="id") %>% 
+  mutate(id=as.integer(id)) %>% 
   gather(key, value, -c(id, count))
 
 variable_missing <- missing_patterns %>% 
