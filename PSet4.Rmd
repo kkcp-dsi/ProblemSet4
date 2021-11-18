@@ -121,7 +121,7 @@ p_variable_hist <- ggplot(input_variable_hist, aes(x=key, y=percentage)) +
 ```
 
 ```{r}
-p_variable_hist + plot_spacer() + p_tile + p_pattern_hist +  plot_layout(widths = c(5, 1))
+p_variable_hist + plot_spacer() + p_tile + p_pattern_hist +  plot_layout(widths = c(5, 1), heights = c(2, 8))
 ```
 
 ### 2. Missing value plot function
