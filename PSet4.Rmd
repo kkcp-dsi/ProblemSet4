@@ -90,15 +90,13 @@ p_tile <- ggplot(pivot_missing_patterns, aes(x=key, y=fct_rev(id), fill=value)) 
 
 ```{r}
 input_pattern_hist <- plots_input %>% 
-  select(c(id, count)) %>%
-  mutate(percentage=(count / num_of_rows))
+  select(c(id, count))
 
-p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=percentage)) + 
+p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=count)) + 
   geom_bar(stat = "identity", fill="#9ecae1") + 
   coord_flip() +
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L, suffix=""), limits = c(0, 1.0)) + 
   xlab(element_blank())  +
-  ylab("% rows") + 
+  ylab("row count") + 
   theme_bw() + 
   theme(
     panel.grid.major.y = element_blank()
@@ -109,13 +107,12 @@ p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=percentage)) +
 input_variable_hist <- pivot_missing_patterns %>% 
   group_by(key) %>%
   summarise(variable_count=sum(count[value=="Missing"])) %>%
-  mutate(percentage=(variable_count / num_of_rows))
+  arrange(desc(variable_count))
 
-p_variable_hist <- ggplot(input_variable_hist, aes(x=key, y=percentage)) + 
+p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
   geom_bar(stat = "identity", fill="#9ecae1") + 
-  scale_y_continuous(labels = scales::percent_format(accuracy = 1L, suffix=""), limits = c(0, 1.0)) + 
   xlab(element_blank())  +
-  ylab("% rows missing") + 
+  ylab("num rows missing") + 
   theme_bw() + 
   theme(
     panel.grid.major.x = element_blank() ,

@@ -61,8 +61,7 @@ plot_missing <- function(data, percent=F) {
   if (percent){
     input_pattern_hist$count = input_pattern_hist$count / nrow(data)
   }
-
-  p_variable_hist <- ggplot(input_variable_hist, aes(x=key, y=variable_count)) +
+  p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
     geom_bar(stat = "identity", fill="#9ecae1") +
     scale_x_discrete(labels = abbreviate) + 
     xlab(element_blank()) +
