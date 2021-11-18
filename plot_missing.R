@@ -37,7 +37,8 @@ plot_missing <- function(data, percent=F) {
   ## visualize missing value pattern
   p_tile <- ggplot(pivot_missing_patterns, aes(x = key, y = fct_rev(id), fill = value)) +
     geom_tile(color = "white") +
-    scale_fill_manual(values=c("#756bb1", "#bdbdbd", "#636363")) +
+    scale_fill_manual(values=c("Missing" = "#756bb1",
+                               "Not missing" = "#bdbdbd", "Complete" = "#636363")) +
     xlab("Variable")  +
     ylab("Missing Pattern") +
     theme(legend.title = element_blank()) +
