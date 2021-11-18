@@ -35,7 +35,7 @@ for (i in 1:10) mycars[sample(32,1), sample(11,1)] <- NA
 -   You can use this code to find and count the missing patterns:
 
 ```{r}
-missing_patterns <- data.frame(is.na(Lock5withR::HollywoodMovies2011)) %>%
+missing_patterns <- data.frame(is.na(mycars)) %>%
   group_by_all() %>%
   count(name = "count", sort = TRUE) %>%
   ungroup()
@@ -44,19 +44,20 @@ missing_patterns <- data.frame(is.na(Lock5withR::HollywoodMovies2011)) %>%
 -   To highlight the complete cases row you need a different fill scale than the one used to show missing vs. non-missing in the main plot (purple and grey in the example). This is a little tricky since you're only allowed one fill scale in **ggplot2**. You can either use `alpha` to control the highlight with `scale_alpha_manual(values = ...)` or use the **ggnewscale** package which provides for multiple fill scales in the same graph.
 
 ```{r}
-num_of_rows <- nrow(Lock5withR::HollywoodMovies2011)
+num_of_rows <- nrow(mycars)
 
-pivot_missing_patterns <- missing_patterns %>% 
+plots_input <- missing_patterns %>% 
   rownames_to_column(var="id") %>% 
-  mutate(id=as.integer(id)) %>% 
-  gather(key, value, -c(id, count))
+  mutate(id=as.integer(id)) %>%
+  mutate(id=factor(id))
 
-variable_missing <- missing_patterns %>% 
-  summarise(across(-one_of(c("count")), ~ sum(., is.na(.), 0))) %>% 
+variable_missing <- plots_input %>% 
+  summarise(across(-one_of(c("count", "id")), ~ sum(., is.na(.), 0))) %>% 
   gather(key, value="missing_count") %>% 
   arrange(desc(missing_count))
 
-pivot_missing_patterns <- pivot_missing_patterns %>% 
+pivot_missing_patterns <- plots_input %>% 
+  gather(key, value, -c(id, count)) %>% 
   inner_join(variable_missing, "key") %>%
   arrange(desc(missing_count), id) %>%
   mutate(id=factor(id)) %>%
@@ -88,8 +89,7 @@ p_tile <- ggplot(pivot_missing_patterns, aes(x=key, y=fct_rev(id), fill=value)) 
 ```
 
 ```{r}
-input_pattern_hist <- missing_patterns %>% 
-  rownames_to_column(var="id") %>%
+input_pattern_hist <- plots_input %>% 
   select(c(id, count)) %>%
   mutate(percentage=(count / num_of_rows))
 
@@ -133,24 +133,24 @@ a)  Create a function for creating missing plots based on your code from questio
 
 ```{r}
 source("plot_missing.R")
-plot_missing(mycars)
+plot_missing(mycars, percent=T)
 ```
 
 You either put the function code in a separate `.R` file or include it in the `.Rmd` file.
 
 b)  Show the output for both options (counts / percent) for the `economics` dataset in the **ggplot2** package. (This is a test to see if your function works if there are no missing values.)
 
-    ```{r}
-    plot_missing(economics)
-    plot_missing(economics, TRUE)
-    ```
+```{r}
+plot_missing(economics)
+plot_missing(economics, TRUE)
+```
 
 c)  Show the output for both options (counts / percent) for the `HollywoodMovies2011` dataset in the **Lock5withR** package. You can shorten the column names so they don't overlap in the plot.
 
-    ```{r}
-    plot_missing(Lock5withR::HollywoodMovies2011)
-    plot_missing(Lock5withR::HollywoodMovies2011, TRUE)
-    ```
+```{r}
+plot_missing(Lock5withR::HollywoodMovies2011)
+plot_missing(Lock5withR::HollywoodMovies2011, TRUE)
+```
 
 ### 3. Setup your GitHub final project repo
 

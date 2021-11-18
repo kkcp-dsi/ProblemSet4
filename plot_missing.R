@@ -1,25 +1,25 @@
 plot_missing <- function(data, percent=F) {
-
+  
   missing_patterns <- data.frame(is.na(data)) %>%
     group_by_all() %>%
     count(name = "count", sort = TRUE) %>%
     ungroup()
-
-  pivot_missing_patterns <- missing_patterns %>%
-    rownames_to_column(var = "id") %>%
-    mutate(id=as.integer(id)) %>%
-    gather(key, value, -c(id, count))
-
-  variable_missing <- missing_patterns %>%
-    summarise(across(-one_of(c("count")), ~ sum(., is.na(.), 0))) %>%
-    gather(key, value = "missing_count") %>%
+    
+  plots_input <- missing_patterns %>% 
+    rownames_to_column(var="id") %>% 
+    mutate(id=factor(as.integer(id)))
+  
+  variable_missing <- plots_input %>% 
+    summarise(across(-one_of(c("count", "id")), ~ sum(., is.na(.), 0))) %>% 
+    gather(key, value="missing_count") %>% 
     arrange(desc(missing_count))
-
-  pivot_missing_patterns <- pivot_missing_patterns %>%
+  
+  pivot_missing_patterns <- plots_input %>% 
+    gather(key, value, -c(id, count)) %>% 
     inner_join(variable_missing, "key") %>%
     arrange(desc(missing_count), id) %>%
-    mutate(id = factor(id)) %>%
-    mutate(key = fct_reorder(key, missing_count, .desc = T))
+    mutate(id=factor(id)) %>%
+    mutate(key=fct_reorder(key, missing_count, .desc=T))
 
   missing_id <- pivot_missing_patterns %>%
     group_by(id) %>%
@@ -40,6 +40,7 @@ plot_missing <- function(data, percent=F) {
     geom_tile(color = "white") +
     scale_fill_manual(values=c("Missing" = "#756bb1",
                                "Not missing" = "#bdbdbd", "Complete" = "#636363")) +
+    scale_x_discrete(labels = abbreviate) + 
     xlab("Variable")  +
     ylab("Missing Pattern") +
     theme(legend.title = element_blank()) +
@@ -54,8 +55,7 @@ plot_missing <- function(data, percent=F) {
     input_variable_hist$variable_count = input_variable_hist$variable_count / nrow(data)
   }
 
-  input_pattern_hist <- missing_patterns %>%
-    rownames_to_column(var = "id") %>%
+  input_pattern_hist <- plots_input %>%
     select(c(id, count))
 
   if (percent){
@@ -64,6 +64,7 @@ plot_missing <- function(data, percent=F) {
 
   p_variable_hist <- ggplot(input_variable_hist, aes(x=key, y=variable_count)) +
     geom_bar(stat = "identity", fill="#9ecae1") +
+    scale_x_discrete(labels = abbreviate) + 
     xlab(element_blank()) +
     ylab("number rows missing") +
     theme_bw() +
