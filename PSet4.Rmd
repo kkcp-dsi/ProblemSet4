@@ -178,8 +178,55 @@ if (!require("fivethirtyeight")) install.packages("fivethirtyeight")
 library(fivethirtyeight)
 ```
 
+The dataset we used for the missing data analysis is **trumpworld_polls**, which is about how the world perceived the US and the US president from 2000 through 2017. There are two separate poll questions, which are "Have a favorable view of the U.S" and "Trust the U.S. President in foreign affairs". In this dataset, there are 37 countries in which the polls were conducted, it's worth noting that the "Favorable view" question was not conducted in 2000, 2002, and 2004 and the "Trust president" question was not conducted in 2001, it's important to point out that we DO NOT consider such cases (where the polls were not conducted at all) as missing value, they were simply not conducted.
+
 ```{r, fig.height=8, fig.width=15}
 plot_missing(trumpworld_polls, percent = T, shortenNames = T)
 ```
 
-As the aggregate missing pattern plot shows, there is no missing values in the "common columns" including **year** and **avg**, and **question**. There are missing values in most of the countries, however, there are no missing values in the following countries, France, Germany, and the UK. The top histogram indicates that for those countries that have either close diplomatic relations or competing interests with the US, people seem more likely to answer the polls regarding their opinions about the US and the US president. Interestingly, there is a complete case pattern in the plot, indicating that all the polls have been answered by people across all countries for certain periods, we need to look at this further in the following analyses.
+As the aggregate missing pattern plot shows, there is no missing values in the "common columns" including **year** and **avg**, and **question**. There are missing values in most of the countries, however, there are no missing values in the following countries, France, Germany, and the UK. The top histogram indicates that for those countries that have either close diplomatic relations or competing interests with the US, people seem more likely to answer the polls regarding their opinions about the US and the US president. Interestingly, there is a complete case pattern in the plot, indicating that all the polls have been answered by people across all countries for certain periods, we need to look at this further in the following analyses. To facilitate the interpretation, we make the assumption that the missing value "NA" represents that scenario, where nobody responded to the poll at all in that particular country.
+
+```{r}
+num_missing_by_country_year <- trumpworld_polls %>% 
+  gather(key="country", value="rating", -c(year, question, avg)) %>%
+  mutate(is_rating_missing=is.na(rating))
+```
+
+```{r, fig.width=8}
+ggplot(num_missing_by_country_year, aes(x=year, y=fct_rev(fct_reorder(country, is_rating_missing, sum)), fill=factor(is_rating_missing))) +
+  geom_tile(color="white") +
+  theme_bw() + 
+  facet_wrap(~question) + 
+  xlab("year") + 
+  ylab("country") + 
+  guides(fill=guide_legend(title="is_missing"))
+```
+
+We generated the geom_tile plot to indicate missingness by country across year. As stated previously, the polls were not conducted in 2000, 2002 and 2004 for "Favorite view of US" and 2001 for "Trust President". Based on the pattern presented in the plot, there are more number of missing values in the early years, and the number of missing values gets smaller as time goes on. In particular, there is no missing value in 2017 for both polls, suggesting all people were more likely to answer the polls in this year. Let's explore whether the number of missing values is associated with the average percentage of people who answered the pool positively, for convenience, we are going to refer to the variable **avg** as positive ratings in the following sections.
+
+```{r}
+num_missing_scatterplot <- num_missing_by_country_year %>%
+  group_by(year, avg, question) %>%
+  summarise(num_of_missing=sum(is_rating_missing)) %>%
+  ungroup() %>%
+  mutate(sitting_president=ifelse(year<=2008, "Bush", ifelse(year<="2016", "Obama", "Trump")))
+
+ggplot(num_missing_scatterplot, aes(x=num_of_missing, y=avg, label=year)) +
+  geom_point() +
+  geom_point(data = . %>% filter(num_of_missing == 0), size=3, color="red") + 
+  facet_wrap(~question)
+```
+
+Based on the above scatterplot, it seems that the more number of missing values there are, the lower the positive ratings are except for the two two points highlighted in the plots. Let's take a look at whether the number of missing values and the average positive ratings have anything to do with who was the sitting president.
+
+```{r}
+ggplot(num_missing_scatterplot, aes(x=year, y=num_of_missing, color=sitting_president)) +
+  geom_point() + 
+  facet_wrap(~question)
+
+ggplot(num_missing_scatterplot, aes(x=year, y=avg, color=sitting_president)) +
+  geom_point() + 
+  facet_wrap(~question)
+```
+
+The scatterplots tell a much better story after color coding the points by sitting president. In general, people didn't seem to be interested in answering the poll when Bush was the sitting president and his positive ratings were relatively low among all participants. On the other hand, Obama seemed to be more popular in the foreign countries, where people were more likely to answer the poll and his positive ratings were very high compared to that of Bush. Despite Obama's popularity, there were still countries in which people didn't respond to the polls at all. Most interestingly, when Trump took office, there was no missing values in any countries and he was the only president that was able to get all countries to respond to the polls, however, his positive ratings were relatively low compared to that of Obama.
