@@ -1,4 +1,4 @@
-plot_missing <- function(data, percent=F) {
+plot_missing <- function(data, percent=F, shortenNames=F) {
   
   missing_patterns <- data.frame(is.na(data)) %>%
     group_by_all() %>%
@@ -39,28 +39,54 @@ plot_missing <- function(data, percent=F) {
   p_tile <- ggplot(pivot_missing_patterns, aes(x = key, y = fct_rev(id), fill = value)) +
     geom_tile(color = "white") +
     scale_fill_manual(values=c("Missing" = "#756bb1",
-                               "Not missing" = "#bdbdbd", "Complete" = "#636363")) +
-    scale_x_discrete(labels = abbreviate) + 
+                               "Not missing" = "#bdbdbd", 
+                               "Complete" = "#636363")) +
     xlab("Variable")  +
     ylab("Missing Pattern") +
     theme(legend.title = element_blank()) +
     theme(legend.position = "none") +
     annotate("text", x = missing_id_x, y = missing_id_y, label = "Complete Case")
-
+  
+  # Short the x-axis labels if the the flag is enabled
+  if (shortenNames){
+    p_tile <- p_tile + scale_x_discrete(labels = abbreviate)
+  }
+  
+  # Create the input for the hist for missing values by variable
   input_variable_hist <- pivot_missing_patterns %>%
     group_by(key) %>%
     summarise(variable_count=sum(count[value=="Missing"]))
-
+  # Overwrite variable_count with percentage if perecent is T
   if (percent){
     input_variable_hist$variable_count = input_variable_hist$variable_count / nrow(data)
   }
-
+  
+  # Create the histogram
+  p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
+    geom_bar(stat = "identity", fill="#9ecae1") +
+    scale_x_discrete(labels = abbreviate) + 
+    xlab(element_blank()) +
+    ylab("number rows missing") +
+    theme_bw() +
+    theme(
+      panel.grid.major.x = element_blank() ,
+      panel.grid.major.y = element_line( size=.1, color="gray")
+    )
+  
+  # Short the x-axis labels if the the flag is enabled
+  if (shortenNames){
+    p_variable_hist <- p_variable_hist + scale_x_discrete(labels = abbreviate)
+  }
+  
+  # Create the input for the hist for missing patterns
   input_pattern_hist <- plots_input %>%
     select(c(id, count))
-
+  
+  # Overwrite variable_count with percentage if perecent is T
   if (percent){
     input_pattern_hist$count = input_pattern_hist$count / nrow(data)
   }
+  
   p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
     geom_bar(stat = "identity", fill="#9ecae1") +
     scale_x_discrete(labels = abbreviate) + 
