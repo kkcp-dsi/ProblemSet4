@@ -38,9 +38,9 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
   ## visualize missing value pattern
   p_tile <- ggplot(pivot_missing_patterns, aes(x = key, y = fct_rev(id), fill = value)) +
     geom_tile(color = "white") +
-    scale_fill_manual(values=c("Missing" = "#756bb1",
-                               "Not missing" = "#bdbdbd", 
-                               "Complete" = "#636363")) +
+    scale_fill_manual(values=c("Missing" = "#B69FE5",
+                               "Not missing" = "#CBCBCB", 
+                               "Complete" = "#B3B3B3")) +
     xlab("Variable")  +
     ylab("Missing Pattern") +
     theme(legend.title = element_blank()) +
@@ -63,7 +63,7 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
   
   # Create the histogram
   p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
-    geom_bar(stat = "identity", fill="#9ecae1") +
+    geom_bar(stat = "identity", fill="#97B7F1") +
     scale_x_discrete(labels = abbreviate) + 
     xlab(element_blank()) +
     ylab("number rows missing") +
@@ -88,7 +88,7 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
   }
   
   p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
-    geom_bar(stat = "identity", fill="#9ecae1") +
+    geom_bar(stat = "identity", fill="#97B7F1") +
     scale_x_discrete(labels = abbreviate) + 
     xlab(element_blank()) +
     ylab("number rows missing") +
@@ -105,7 +105,7 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
   }
 
   p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=count)) +
-    geom_bar(stat = "identity", fill="#9ecae1") +
+    geom_bar(stat = "identity", fill="#97B7F1") +
     coord_flip() +
     xlab(element_blank())  +
     ylab("row count") +
