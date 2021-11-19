@@ -1,4 +1,7 @@
 plot_missing <- function(data, percent=F, shortenNames=F) {
+  require(tidyverse)
+  require(patchwork)
+  
   
   missing_patterns <- data.frame(is.na(data)) %>%
     group_by_all() %>%
