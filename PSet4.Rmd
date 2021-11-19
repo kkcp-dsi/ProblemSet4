@@ -100,16 +100,25 @@ p_tile <- ggplot(pivot_missing_patterns, aes(x = key, y = fct_rev(id), fill = va
 
 ```{r}
 input_pattern_hist <- plots_input %>% 
-  select(c(id, count))
+  select(c(id, count)) %>% 
+  mutate(is_complete=ifelse(id == missing_id_y, "Complete", "Missing"))
 
-p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=count)) + 
-  geom_bar(stat = "identity", fill="#97B7F1") + 
+p_pattern_hist <- ggplot(input_pattern_hist, 
+                         aes(x=fct_rev(id), 
+                             y=count, 
+                             fill = is_complete)) + 
+  geom_bar(stat = "identity") + 
+  scale_fill_manual(values = c(
+    "Missing" = "#97B7F1",
+    "Complete" = "#6495EC")) +
   coord_flip() +
   xlab(element_blank())  +
   ylab("row count") + 
   theme_bw() + 
   theme(
-    panel.grid.major.y = element_blank()
+    panel.grid.major.y = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "none"
   )
 ```
 
@@ -125,7 +134,7 @@ p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, va
   ylab("num rows missing") + 
   theme_bw() + 
   theme(
-    panel.grid.major.x = element_blank() ,
+    panel.grid.major.x = element_blank(),
     panel.grid.major.y = element_line( size=.1, color="gray")
   )
 ```

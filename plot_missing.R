@@ -78,40 +78,36 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
     p_variable_hist <- p_variable_hist + scale_x_discrete(labels = abbreviate)
   }
   
-  # Create the input for the hist for missing patterns
-  input_pattern_hist <- plots_input %>%
-    select(c(id, count))
-  
-  # Overwrite variable_count with percentage if perecent is T
-  if (percent){
-    input_pattern_hist$count = input_pattern_hist$count / nrow(data)
-  }
-  
-  p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
-    geom_bar(stat = "identity", fill="#97B7F1") +
-    scale_x_discrete(labels = abbreviate) + 
-    xlab(element_blank()) +
-    ylab("number rows missing") +
-    theme_bw() +
-    theme(
-      panel.grid.major.x = element_blank() ,
-      panel.grid.major.y = element_line( size=.1, color="gray")
-    )
-
   if (percent){
     p_variable_hist <- p_variable_hist +
       ylab("% rows missing") +
       scale_y_continuous(labels = scales::percent_format(accuracy = 1L, suffix=""), limits = c(0, 1.0))
   }
+  
+  # Create the input for the hist for missing patterns
+  input_pattern_hist <- plots_input %>%
+    select(c(id, count)) %>%
+    mutate(is_complete=ifelse(id == missing_id_y, "Complete", "Missing"))
+  
+  # Overwrite variable_count with percentage if perecent is T
+  if (percent){
+    input_pattern_hist$count = input_pattern_hist$count / nrow(data)
+  }
 
-  p_pattern_hist <- ggplot(input_pattern_hist, aes(x=fct_rev(id), y=count)) +
-    geom_bar(stat = "identity", fill="#97B7F1") +
+  p_pattern_hist <- ggplot(input_pattern_hist, 
+                           aes(x=fct_rev(id), y=count, fill = is_complete)) + 
+    geom_bar(stat = "identity") + 
+    scale_fill_manual(values = c(
+      "Missing" = "#97B7F1",
+      "Complete" = "#6495EC")) +
     coord_flip() +
     xlab(element_blank())  +
-    ylab("row count") +
-    theme_bw() +
+    ylab("row count") + 
+    theme_bw() + 
     theme(
-      panel.grid.major.y = element_blank()
+      panel.grid.major.y = element_blank(),
+      legend.title = element_blank(),
+      legend.position = "none"
     )
 
   if (percent){
