@@ -51,17 +51,18 @@ plots_input <- missing_patterns %>%
   mutate(id = as.integer(id)) %>%
   mutate(id = factor(id))
 
-variable_missing <- plots_input %>%
-  summarise(across(-one_of(c("count", "id")), ~ sum(., is.na(.), 0))) %>%
-  gather(key, value = "missing_count") %>%
-  arrange(desc(missing_count))
+input_variable_hist <- plots_input %>%
+  gather(key, value, -c(id, count)) %>%
+  group_by(key) %>%
+  summarise(variable_count = sum(count * value)) %>%
+  arrange(desc(variable_count)) %>%
+  mutate(variable_order=row_number())
 
 pivot_missing_patterns <- plots_input %>%
   gather(key, value, -c(id, count)) %>%
-  inner_join(variable_missing, "key") %>%
-  arrange(desc(missing_count), id) %>%
+  inner_join(input_variable_hist, "key") %>%
   mutate(id = factor(id)) %>%
-  mutate(key = fct_reorder(key, missing_count, .desc = T))
+  mutate(key = fct_reorder(key, variable_order, min))
 
 missing_id <- pivot_missing_patterns %>%
   group_by(id) %>%
@@ -123,12 +124,7 @@ p_pattern_hist <- ggplot(input_pattern_hist,
 ```
 
 ```{r}
-input_variable_hist <- pivot_missing_patterns %>% 
-  group_by(key) %>%
-  summarise(variable_count=sum(count[value=="Missing"])) %>%
-  arrange(desc(variable_count))
-
-p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
+p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_reorder(key, variable_order), y=variable_count)) + 
   geom_bar(stat = "identity", fill="#97B7F1") + 
   xlab(element_blank())  +
   ylab("num rows missing") + 
@@ -179,6 +175,28 @@ b)  Make sure that all team members have write access to the repository and have
 [Contributors](https://github.com/kkcp-dsi/CraftBeerRatingsAnalysis/graphs/contributors) - <https://github.com/kkcp-dsi/CraftBeerRatingsAnalysis/graphs/contributors>
 
 c)  Discuss a plan for dividing up the work for the final project and briefly summarize what each person will do.
+
+We are at the data collection stage currently. Since the inception of the final project, we've been web scraping the beer information from untappd periodically including average ratings, number of check-ins, beer style, and etc. This is an ongoing effort that is being carried out by both of us, we are taking turns to web scrape the data.
+
+In addition to that, we are trying to identify the data sources for beer ingredients because preliminary searches conducted for project proposal showed that this type of information is not readily available online.
+
+-   Chao will be writing the introduction
+
+-   We will both work on data collection
+
+-   Krishna will focus on data transformation
+
+-   Once we have collected all the data, we will divide the following questions between the two of us
+
+    -   Find out if there is any correlation between the location of the brewery and the ratings that a brewery is getting (Krishna)
+
+    -   Find out the correlation between ratings and ingredients used in the beer. (Krishna)
+
+    -   Find out the correlation between beer styles and the kind of ratings they receive. (Chao)
+
+    -   As a bonus question, it would be nice to find out the highly rated styles of beers in each state because it would guide us in hunting the best beers in the future. (Chao)
+
+-   We will work on interactive components and conclusion together
 
 ### 4. Missing values chapter
 

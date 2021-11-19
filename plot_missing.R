@@ -9,17 +9,19 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
     rownames_to_column(var="id") %>% 
     mutate(id=factor(as.integer(id)))
   
-  variable_missing <- plots_input %>% 
-    summarise(across(-one_of(c("count", "id")), ~ sum(., is.na(.), 0))) %>% 
-    gather(key, value="missing_count") %>% 
-    arrange(desc(missing_count))
+  # Create the input for the hist for missing values by variable
+  input_variable_hist <- plots_input %>%
+    gather(key, value, -c(id, count)) %>%
+    group_by(key) %>%
+    summarise(variable_count = sum(count * value)) %>%
+    arrange(desc(variable_count)) %>%
+    mutate(variable_order=row_number())
   
-  pivot_missing_patterns <- plots_input %>% 
-    gather(key, value, -c(id, count)) %>% 
-    inner_join(variable_missing, "key") %>%
-    arrange(desc(missing_count), id) %>%
-    mutate(id=factor(id)) %>%
-    mutate(key=fct_reorder(key, missing_count, .desc=T))
+  pivot_missing_patterns <- plots_input %>%
+    gather(key, value, -c(id, count)) %>%
+    inner_join(input_variable_hist, "key") %>%
+    mutate(id = factor(id)) %>%
+    mutate(key = fct_reorder(key, variable_order, min))
 
   missing_id <- pivot_missing_patterns %>%
     group_by(id) %>%
@@ -52,19 +54,14 @@ plot_missing <- function(data, percent=F, shortenNames=F) {
     p_tile <- p_tile + scale_x_discrete(labels = abbreviate)
   }
   
-  # Create the input for the hist for missing values by variable
-  input_variable_hist <- pivot_missing_patterns %>%
-    group_by(key) %>%
-    summarise(variable_count=sum(count[value=="Missing"]))
   # Overwrite variable_count with percentage if perecent is T
   if (percent){
     input_variable_hist$variable_count = input_variable_hist$variable_count / nrow(data)
   }
   
   # Create the histogram
-  p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_rev(fct_reorder(key, variable_count)), y=variable_count)) + 
+  p_variable_hist <- ggplot(input_variable_hist, aes(x=fct_reorder(key, variable_order), y=variable_count)) + 
     geom_bar(stat = "identity", fill="#97B7F1") +
-    scale_x_discrete(labels = abbreviate) + 
     xlab(element_blank()) +
     ylab("number rows missing") +
     theme_bw() +
